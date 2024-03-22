@@ -3,12 +3,25 @@ import { Note, Tag } from "../App";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-type NoteLiatProps = {
+type NoteListProps = {
   availableTags: Tag[];
   notes: Note[];
+  onUpdateTag: (id: string, label: string) => void;
+  onDeleteTag: (id: string) => void;
 };
 
-export function Home({ availableTags, notes }: NoteLiatProps) {
+type EditTagsModalProps = {
+  availableTags: Tag[];
+  onUpdateTag: (id: string, label: string) => void;
+  onDeleteTag: (id: string) => void;
+};
+
+export function Home({
+  availableTags,
+  notes,
+  onDeleteTag,
+  onUpdateTag,
+}: NoteListProps) {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [title, setTitle] = useState("");
 
@@ -23,7 +36,7 @@ export function Home({ availableTags, notes }: NoteLiatProps) {
           ))
       );
     });
-  }, [title, notes]);
+  }, [title, notes, selectedTags]);
 
   return (
     <>
@@ -36,13 +49,25 @@ export function Home({ availableTags, notes }: NoteLiatProps) {
           >
             Create
           </Link>
-          <button className="mt-2 mr-2 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+          <button
+            className="mt-2 mr-2 rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            onClick={() => {
+              const modalElement = document.getElementById("my_modal_2");
+              if (modalElement instanceof HTMLDialogElement) {
+                modalElement.showModal();
+              } else {
+                console.error(
+                  "Element with ID 'my_modal_2' does not exist or is not a HTMLDialogElement."
+                );
+              }
+            }}
+          >
             Edit Tags
           </button>
         </div>
       </div>
-      <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-        <div className="sm:col-span-5">
+      <div className="mt-10 grid grid-cols-2 gap-4">
+        <div className="">
           <label
             htmlFor="first-name"
             className="block text-sm font-medium leading-6 text-gray-900"
@@ -65,7 +90,7 @@ export function Home({ availableTags, notes }: NoteLiatProps) {
           </div>
         </div>
 
-        <div className="sm:col-span-3">
+        <div className="">
           <label
             htmlFor="first-name"
             className="block text-sm font-medium leading-6 text-gray-900"
@@ -98,22 +123,75 @@ export function Home({ availableTags, notes }: NoteLiatProps) {
       <div className="mt-8">
         {filteredNotes.map((note) => (
           <div
-            className="max-w-sm rounded overflow-hidden shadow-xl"
+            className="max-w-sm rounded overflow-hidden shadow-lg ring-1 ring-inset ring-gray-300"
             key={note.id}
           >
-            <div className="px-6 py-4">
-              <div className="font-bold text-xl mb-2">{note.title}</div>
-            </div>
-            <div className="px-6 pt-4 pb-2">
-              {note.tags.map((tag) => (
-                <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">
-                  {tag.label}
-                </span>
-              ))}
-            </div>
+            <Link to={`/${note.id}`}>
+              <div className="px-6 py-4">
+                <div className="font-bold text-xl mb-2">{note.title}</div>
+              </div>
+              <div className="px-6 pt-4 pb-2">
+                {note.tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
+                  >
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+            </Link>
           </div>
         ))}
       </div>
+
+      <EditTagsModal
+        availableTags={availableTags}
+        onDeleteTag={onDeleteTag}
+        onUpdateTag={onUpdateTag}
+      />
+    </>
+  );
+}
+
+function EditTagsModal({
+  availableTags,
+  onDeleteTag,
+  onUpdateTag,
+}: EditTagsModalProps) {
+  return (
+    <>
+      <dialog id="my_modal_2" className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Edit Tags</h3>
+          <div className="p-3 w-full">
+            {availableTags.map((tag) => {
+              return (
+                <div
+                  key={tag.id}
+                  className="w-full flex items-center justify-around mb-3 "
+                >
+                  <input
+                    className="w-[80%] px-3.5 py-2.5 outline-1 outline-indigo-600 ring-1 ring-inset ring-gray-300 rounded-md"
+                    value={tag.label}
+                    onChange={(e) => onUpdateTag(tag.id, e.target.value)}
+                  />
+
+                  <button
+                    onClick={() => onDeleteTag(tag.id)}
+                    className="rounded-md px-3.5 py-2.5 border-2 border-red-400 text-red-400 hover:bg-red-400 hover:text-white"
+                  >
+                    &times;
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </>
   );
 }

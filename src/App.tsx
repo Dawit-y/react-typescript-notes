@@ -4,6 +4,9 @@ import { Home } from "./Components/Home";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
+import NoteLayout from "./Components/NoteLayout";
+import Note from "./Components/Note";
+import EditNote from "./Components/EditNote";
 
 export type Note = {
   id: string;
@@ -55,13 +58,57 @@ function App() {
   function addTag(tag: Tag) {
     setTags((prev) => [...prev, tag]);
   }
+
+  function onUpdate(id: string, { tags, ...data }: NoteData) {
+    setNotes((prevNotes) => {
+      return prevNotes.map((note) => {
+        if (note.id == id) {
+          return { ...note, ...data, tagIds: tags.map((tag) => tag.id) };
+        } else {
+          return note;
+        }
+      });
+    });
+  }
+
+  function onDeleteNote(id: string) {
+    setNotes((prevNotes) => {
+      return prevNotes.filter((note) => note.id !== id);
+    });
+  }
+
+  function updateTag(id: string, label: string) {
+    setTags((prevTags) => {
+      return prevTags.map((tag) => {
+        if (tag.id == id) {
+          return { ...tag, label };
+        } else {
+          return tag;
+        }
+      });
+    });
+  }
+
+  function deleteTag(id: string) {
+    setTags((prevTags) => {
+      return prevTags.filter((tag) => tag.id !== id);
+    });
+  }
+
   return (
     <div className="p-4 mx-64">
       <BrowserRouter>
         <Routes>
           <Route
             path="/"
-            element={<Home availableTags={tags} notes={notesWithTags} />}
+            element={
+              <Home
+                availableTags={tags}
+                notes={notesWithTags}
+                onUpdateTag={updateTag}
+                onDeleteTag={deleteTag}
+              />
+            }
           />
           <Route
             path="new"
@@ -73,6 +120,19 @@ function App() {
               />
             }
           />
+          <Route path=":id" element={<NoteLayout notes={notesWithTags} />}>
+            <Route index element={<Note onDelete={onDeleteNote} />} />
+            <Route
+              path="edit"
+              element={
+                <EditNote
+                  onSubmit={onUpdate}
+                  onAddTag={addTag}
+                  availableTags={tags}
+                />
+              }
+            />
+          </Route>
         </Routes>
       </BrowserRouter>
     </div>
